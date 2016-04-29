@@ -1,0 +1,190 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Environment",
+  "Parameters": {
+    "CIDRSubnetPrivateApp1": {
+      "Description": "Network CIDR for subnet private App1",
+      "Type": "String"
+    },
+    "CIDRSubnetPrivateApp2": {
+      "Description": "Network CIDR for subnet private App2",
+      "Type": "String"
+    },
+    "CIDRSubnetPrivateDB1": {
+      "Description": "Network CIDR for subnet private DB1",
+      "Type": "String"
+    },
+    "CIDRSubnetPrivateDB2": {
+      "Description": "Network CIDR for subnet private DB2",
+      "Type": "String"
+    },
+    "CIDRSubnetPublic1": {
+      "Description": "Network CIDR for subnet public 1",
+      "Type": "String"
+    },
+    "CIDRSubnetPublic2": {
+      "Description": "Network CIDR for subnet public 2",
+      "Type": "String"
+    },
+    "CIDRVPC": {
+      "Description": "Network CIDR for VPC",
+      "Type": "String"
+    },
+    "CookbooksURL4CF": {
+      "Description": "Cookbooks URL for CloudFormation.",
+      "Type": "String"
+    },
+    "KeyPair": {
+      "Description": "EC2 ssh keypare name. Trigger new instances(include delete old instances) if we change KeyPair value.",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "MinLength": "1",
+      "MaxLength": "64",
+      "ConstraintDescription": "Length is too long"
+    },
+    "Prefix": {
+      "Description": "Name of the environment. prefix of all resources",
+      "Default": "staging",
+      "Type": "String",
+      "MinLength": "0",
+      "MaxLength": "24",
+      "ConstraintDescription": "Length is too long"
+    }
+  },
+  "Mappings": {
+    "AWSRegionToAMI": {
+      "us-east-1": {
+        "AMI": "ami-8fcee4e5"
+      },
+      "us-west-1": {
+        "AMI": "ami-d5ea86b5"
+      },
+      "us-west-2": {
+        "AMI": "ami-9ff7e8af"
+      }
+    }
+  },
+  "Resources": {
+    "StackVPC": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/module-vpc.template" ] ] },
+        "Parameters": {
+          "CIDRSubnetPrivateApp1": {
+            "Ref": "CIDRSubnetPrivateApp1"
+          },
+          "CIDRSubnetPrivateApp2": {
+            "Ref": "CIDRSubnetPrivateApp2"
+          },
+          "CIDRSubnetPrivateDB1": {
+            "Ref": "CIDRSubnetPrivateDB1"
+          },
+          "CIDRSubnetPrivateDB2": {
+            "Ref": "CIDRSubnetPrivateDB2"
+          },
+          "CIDRSubnetPublic1": {
+            "Ref": "CIDRSubnetPublic1"
+          },
+          "CIDRSubnetPublic2": {
+            "Ref": "CIDRSubnetPublic2"
+          },
+          "CIDRVPC": {
+            "Ref": "CIDRVPC"
+          },
+          "Prefix": { "Ref": "Prefix" }
+        }
+      }
+    },
+    "StackNatBastion": {
+      "Type": "AWS::CloudFormation::Stack",
+      "DependsOn": [
+        "StackVPC"
+      ],
+      "Properties": {
+        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/module-natbastion.template" ] ] },
+        "Parameters": {
+          "AmiImageId": { "Fn::FindInMap": ["AWSRegionToAMI", {"Ref": "AWS::Region"}, "AMI"] },
+          "CIDRVPC": {
+            "Ref": "CIDRVPC"
+          },
+          "EnvShortName": {
+            "Ref": "EnvShortName"
+          },
+          "KeyPair": {
+            "Ref": "KeyPair"
+          },
+          "Prefix": { "Ref": "Prefix" },
+          "RouteTableNat1": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.RouteTableNat1"
+            ]
+          },
+          "RouteTableNat2": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.RouteTableNat2"
+            ]
+          },
+          "SubnetPublic1": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.SubnetPublic1"
+            ]
+          },
+          "SubnetPublic2": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.SubnetPublic2"
+            ]
+          },
+          "VPC": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.VPC"
+            ]
+          }
+        }
+      }
+    },
+    "StackOpsMain": {
+      "Type": "AWS::CloudFormation::Stack",
+      "DependsOn": [
+        "StackVPC", "StackNatBastion"
+      ],
+      "Properties": {
+        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/module-main.template" ] ] },
+        "Parameters": {
+          "CookbooksURL4CF": {
+            "Ref": "CookbooksURL4CF"
+          },
+          "EnvSeg": {"Ref": "EnvSeg"},
+          "EnvShortName": {
+            "Ref": "EnvShortName"
+          },
+          "KeyPair": {
+            "Ref": "KeyPair"
+          },
+          "Prefix": {"Ref": "Prefix"},
+          "SubnetPrivateApp1": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.SubnetPrivateApp1"
+            ]
+          },
+          "SubnetPrivateApp2": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.SubnetPrivateApp2"
+            ]
+          },
+          "VPC": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.VPC"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
