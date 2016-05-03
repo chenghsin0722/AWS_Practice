@@ -4,34 +4,37 @@
   "Parameters": {
     "CIDRSubnetPrivateApp1": {
       "Description": "Network CIDR for subnet private App1",
+      "Default": "10.104.18.0/25",
       "Type": "String"
     },
     "CIDRSubnetPrivateApp2": {
       "Description": "Network CIDR for subnet private App2",
+      "Default": "10.104.18.128/25",
       "Type": "String"
     },
     "CIDRSubnetPrivateDB1": {
       "Description": "Network CIDR for subnet private DB1",
+      "Default": "10.104.17.0/25",
       "Type": "String"
     },
     "CIDRSubnetPrivateDB2": {
       "Description": "Network CIDR for subnet private DB2",
+      "Default": "10.104.17.128/25",
       "Type": "String"
     },
     "CIDRSubnetPublic1": {
       "Description": "Network CIDR for subnet public 1",
+      "Default": "10.104.16.0/25",
       "Type": "String"
     },
     "CIDRSubnetPublic2": {
       "Description": "Network CIDR for subnet public 2",
+      "Default": "10.104.16.128/25",
       "Type": "String"
     },
     "CIDRVPC": {
       "Description": "Network CIDR for VPC",
-      "Type": "String"
-    },
-    "CookbooksURL4CF": {
-      "Description": "Cookbooks URL for CloudFormation.",
+      "Default": "10.104.16.0/22",
       "Type": "String"
     },
     "KeyPair": {
@@ -43,11 +46,16 @@
     },
     "Prefix": {
       "Description": "Name of the environment. prefix of all resources",
-      "Default": "staging",
+      "Default": "dev",
       "Type": "String",
       "MinLength": "0",
       "MaxLength": "24",
       "ConstraintDescription": "Length is too long"
+    },
+    "TemplateURL4CF": {
+      "Description": "Template URL for CloudFormation: Default is s3-us-west-2.amazonaws.com/ch-cf-template",
+      "Default": "s3-us-west-2.amazonaws.com/ch-cf-template",
+      "Type": "String"
     }
   },
   "Mappings": {
@@ -67,7 +75,7 @@
     "StackVPC": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/module-vpc.template" ] ] },
+        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/aws.module-vpc.template" ] ] },
         "Parameters": {
           "CIDRSubnetPrivateApp1": {
             "Ref": "CIDRSubnetPrivateApp1"
@@ -100,14 +108,11 @@
         "StackVPC"
       ],
       "Properties": {
-        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/module-natbastion.template" ] ] },
+        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/aws.module-natbastion.template" ] ] },
         "Parameters": {
           "AmiImageId": { "Fn::FindInMap": ["AWSRegionToAMI", {"Ref": "AWS::Region"}, "AMI"] },
           "CIDRVPC": {
             "Ref": "CIDRVPC"
-          },
-          "EnvShortName": {
-            "Ref": "EnvShortName"
           },
           "KeyPair": {
             "Ref": "KeyPair"
@@ -135,46 +140,6 @@
             "Fn::GetAtt": [
               "StackVPC",
               "Outputs.SubnetPublic2"
-            ]
-          },
-          "VPC": {
-            "Fn::GetAtt": [
-              "StackVPC",
-              "Outputs.VPC"
-            ]
-          }
-        }
-      }
-    },
-    "StackOpsMain": {
-      "Type": "AWS::CloudFormation::Stack",
-      "DependsOn": [
-        "StackVPC", "StackNatBastion"
-      ],
-      "Properties": {
-        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/module-main.template" ] ] },
-        "Parameters": {
-          "CookbooksURL4CF": {
-            "Ref": "CookbooksURL4CF"
-          },
-          "EnvSeg": {"Ref": "EnvSeg"},
-          "EnvShortName": {
-            "Ref": "EnvShortName"
-          },
-          "KeyPair": {
-            "Ref": "KeyPair"
-          },
-          "Prefix": {"Ref": "Prefix"},
-          "SubnetPrivateApp1": {
-            "Fn::GetAtt": [
-              "StackVPC",
-              "Outputs.SubnetPrivateApp1"
-            ]
-          },
-          "SubnetPrivateApp2": {
-            "Fn::GetAtt": [
-              "StackVPC",
-              "Outputs.SubnetPrivateApp2"
             ]
           },
           "VPC": {

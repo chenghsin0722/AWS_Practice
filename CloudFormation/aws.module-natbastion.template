@@ -11,10 +11,6 @@
     "CIDRVPC": {
       "Type": "String"
     },
-    "EnvShortName": {
-      "Description": "For yum process as we set up in TrendMicro DC",
-      "Type": "String"
-    },
     "KeyPair": {
       "Description": "EC2 ssh keypair name",
       "Type": "String"
@@ -37,10 +33,6 @@
     },
     "VPC": {
       "Description": "VPC id",
-      "Type": "String"
-    },
-    "WrsYumRepoS3": {
-      "Description": "For basion installation and OpsWorks to get WRS RPM from S3",
       "Type": "String"
     }
   },
@@ -156,20 +148,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "sg", "bastion" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
-          },
-          {
-            "Key": "project",
-            "Value": "common_infra"
-          },
-          {
-            "Key": "component",
-            "Value": "security_group_bastion"
           }
         ]
       }
@@ -191,20 +169,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "sg", "nat" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
-          },
-          {
-            "Key": "project",
-            "Value": "common_infra"
-          },
-          {
-            "Key": "component",
-            "Value": "security_group_nat"
           }
         ]
       }
@@ -310,39 +274,6 @@
                   ]
                 } ]
             }
-          },
-          {
-            "PolicyName": "ForOpspatch4all",
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [ {
-                  "Effect": "Allow",
-                  "Resource": "*",
-                  "Action": [
-                    "ec2:DescribeInstances",
-                    "iam:ListAccountAliases"
-                  ]
-                } ]
-            }
-          },
-          {
-            "PolicyName": "ForDnsUpdate",
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [ {
-                  "Effect": "Allow",
-                  "Resource": [
-                      "arn:aws:route53:::hostedzone/Z11VRXG67Z8N08",
-                      "arn:aws:route53:::hostedzone/Z24T6NWDKWUKTG",
-                      "arn:aws:route53:::hostedzone/Z30CH8KIDDDVW0"
-                  ],
-                  "Action": [
-                    "route53:ChangeResourceRecordSets",
-                    "route53:GetHostedZone",
-                    "route53:ListResourceRecordSets"
-                  ]
-                } ]
-            }
           }
         ]
       }
@@ -384,20 +315,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [".", [ { "Ref": "Prefix" }, "vpc", "a", "i", "nat" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
-          },
-          {
-            "Key": "project",
-            "Value": "common_infra"
-          },
-          {
-            "Key": "component",
-            "Value": "ec2_instance_nat"
           }
         ],
         "UserData": {
@@ -485,20 +402,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [".", [ { "Ref": "Prefix" }, "vpc", "b", "i", "nat" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
-          },
-          {
-            "Key": "project",
-            "Value": "common_infra"
-          },
-          {
-            "Key": "component",
-            "Value": "ec2_instance_nat"
           }
         ],
         "UserData": {
@@ -598,20 +501,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "a", "i", "bastion" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
-          },
-          {
-            "Key": "project",
-            "Value": "common_infra"
-          },
-          {
-            "Key": "component",
-            "Value": "ec2_instance_bastion"
           }
         ],
         "UserData": {
@@ -621,16 +510,8 @@
               [
                 "#!/bin/bash\n",
                 "yum -y update\n",
-                "aws s3 cp s3://", { "Ref": "WrsYumRepoS3" }, "/6/opspatch4s3yum-0-2.noarch.rpm /tmp/\n",
-                "aws s3 cp s3://", { "Ref": "WrsYumRepoS3" }, "/6/opspatch4s3", { "Ref": "EnvShortName" }, "-0-latest.noarch.rpm /tmp/\n",
-                "yum install -y /tmp/opspatch4s3", { "Ref": "EnvShortName" }, "-0-latest.noarch.rpm /tmp/opspatch4s3yum-0-2.noarch.rpm\n",
                 "yum-config-manager --enable epel\n",
-                "sleep 7 ; yum list salt-minion\n",
                 "rpm -ivh http://apt.sw.be/redhat/el6/en/x86_64/rpmforge/RPMS/monit-5.5-1.el6.rf.x86_64.rpm\n",
-                "TEMPLOGFILE4ALL=$(mktemp /tmp/yum.install.-y.opspatch4all.`date +%F`.XXXXXXXXXX)\n",
-                "yum install -y opspatch4all &> $TEMPLOGFILE4ALL\n",
-                "TEMPLOGFILE4X64=$(mktemp /tmp/yum.install.-y.opspatch4x64.`date +%F`.XXXXXXXXXX)\n",
-                "yum install -y opspatch4x64 &> $TEMPLOGFILE4X64\n",
                 "exit 0\n"
               ]
             ]

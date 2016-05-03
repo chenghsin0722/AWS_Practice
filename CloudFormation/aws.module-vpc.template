@@ -26,9 +26,6 @@
     },
     "CIDRSubnetPrivateDB2": {
       "Type": "String"
-    },
-    "CIDRSubnetPrivateDB3": {
-      "Type": "String"
     }
   },
   "Conditions" : {
@@ -46,20 +43,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
-          },
-          {
-            "Key": "project",
-            "Value": "common_infra"
-          },
-          {
-            "Key": "component",
-            "Value": "vpc"
           }
         ]
       }
@@ -76,12 +59,6 @@
           {
             "Key": "Name",
             "Value": {"Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "a", "snet", "pub" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
           }
         ]
       }
@@ -100,12 +77,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "b", "snet", "pub" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
           }
         ]
       }
@@ -124,12 +95,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "a", "snet", "pri", "app" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
           }
         ]
       }
@@ -148,12 +113,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "b", "snet", "pri", "app" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
           }
         ]
       }
@@ -172,12 +131,6 @@
           {
             "Key": "Name",
             "Value": {"Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "a", "snet", "db" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
           }
         ]
       }
@@ -196,36 +149,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "b", "snet", "db" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
-          }
-        ]
-      }
-    },
-    "SubnetPrivateDB3": {
-      "Type": "AWS::EC2::Subnet",
-      "Properties": {
-        "VpcId": {
-          "Ref": "VPC"
-        },
-        "CidrBlock": {
-          "Ref": "CIDRSubnetPrivateDB3"
-        },
-        "AvailabilityZone": { "Fn::Select": [ { "Fn::If" : [ "TwoAZs", "0", "2" ] }, { "Fn::GetAZs": "" } ] },
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "c", "snet", "db" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
           }
         ]
       }
@@ -241,20 +164,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "igw" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
-          },
-          {
-            "Key": "project",
-            "Value": "common_infra"
-          },
-          {
-            "Key": "component",
-            "Value": "internet_gateway"
           }
         ]
       }
@@ -273,20 +182,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "rtb", "internet" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
-          },
-          {
-            "Key": "project",
-            "Value": "common_infra"
-          },
-          {
-            "Key": "component",
-            "Value": "route_table_internet"
           }
         ]
       }
@@ -305,20 +200,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "rtb", "nat-a" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
-          },
-          {
-            "Key": "project",
-            "Value": "common_infra"
-          },
-          {
-            "Key": "component",
-            "Value": "route_table_nat1"
           }
         ]
       }
@@ -337,20 +218,6 @@
           {
             "Key": "Name",
             "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "rtb", "nat-b" ] ] }
-          },
-          {
-            "Key": "EnvName",
-            "Value": {
-              "Ref": "Prefix"
-            }
-          },
-          {
-            "Key": "project",
-            "Value": "common_infra"
-          },
-          {
-            "Key": "component",
-            "Value": "route_table_nat2"
           }
         ]
       }
@@ -423,17 +290,6 @@
         }
       }
     },
-    "SubnetRouteTableNat1AssociationDB3": {
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-      "Properties": {
-        "SubnetId": {
-          "Ref": "SubnetPrivateDB3"
-        },
-        "RouteTableId": {
-          "Ref": "RouteTableNat1"
-        }
-      }
-    },
     "SubnetRouteTableNat2AssociationApp2": {
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
       "Properties": {
@@ -491,11 +347,6 @@
     "SubnetPrivateDB2": {
       "Value": {
         "Ref": "SubnetPrivateDB2"
-      }
-    },
-    "SubnetPrivateDB3": {
-      "Value": {
-        "Ref": "SubnetPrivateDB3"
       }
     },
     "RouteTableInternet": {
