@@ -53,7 +53,7 @@
         "VpcId": { "Ref": "VPC" },
         "DefaultSubnetId": {"Ref": "SubnetPublic1"},
         "UseCustomCookbooks": true,
-        "UseOpsworksSecurityGroups": false,
+        "UseOpsworksSecurityGroups": true,
         "CustomJson": {
            "prefix": { "Ref": "Prefix" }
         }
