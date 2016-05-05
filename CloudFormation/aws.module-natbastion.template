@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Stg - NATs Bastion",
+  "Description": "Dev - NATs Bastion",
   "Parameters": {
     "AmiImageId": {
       "Description": "AMI image id",

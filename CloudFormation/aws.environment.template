@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Environment",
+  "Description": "Dev - Basic Environment",
   "Parameters": {
     "CIDRSubnetPrivateApp1": {
       "Description": "Network CIDR for subnet private App1",
@@ -35,6 +35,11 @@
     "CIDRVPC": {
       "Description": "Network CIDR for VPC",
       "Default": "10.104.16.0/22",
+      "Type": "String"
+    },
+    "CookbooksURL4CF": {
+      "Description": "Cookbooks URL for CloudFormation.",
+      "Default": "s3-us-west-2.amazonaws.com/ch-cookbooks",
       "Type": "String"
     },
     "KeyPair": {
@@ -143,6 +148,54 @@
             ]
           },
           "VPC": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.VPC"
+            ]
+          }
+        }
+      }
+    },
+    "StackMain": {
+      "Type": "AWS::CloudFormation::Stack",
+      "DependsOn": [
+        "StackVPC", "StackNatBastion"
+      ],
+      "Properties": {
+        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/aws.module-main.template" ] ] },
+        "Parameters": {
+          "CookbooksURL4CF": {
+            "Ref": "CookbooksURL4CF"
+          },
+        "KeyPair": {
+            "Ref": "KeyPair"
+          },
+        "Prefix": {"Ref": "Prefix"},
+        "SubnetPrivateApp1": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.SubnetPrivateApp1"
+            ]
+          },
+        "SubnetPrivateApp2": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.SubnetPrivateApp2"
+            ]
+          },
+        "SubnetPublic1": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.SubnetPublic1"
+            ]
+          },
+        "SubnetPublic2": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.SubnetPublic2"
+            ]
+          },
+        "VPC": {
             "Fn::GetAtt": [
               "StackVPC",
               "Outputs.VPC"

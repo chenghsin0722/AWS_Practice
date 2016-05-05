@@ -1,0 +1,70 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Dev - Main Stack",
+  "Parameters": {
+    "CookbooksURL4CF": {
+      "Type": "String"
+    },
+    "KeyPair": {
+      "Description": "EC2 ssh keypare name",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+    "Prefix": {
+      "Description": "prefix of resources",
+      "Type": "String"
+    },
+    "SubnetPrivateApp1": {
+      "Type": "String"
+    },
+    "SubnetPrivateApp2": {
+      "Type": "String"
+    },
+    "SubnetPublic1": {
+      "Type": "String"
+    },
+    "SubnetPublic2": {
+      "Type": "String"
+    },
+    "VPC": {
+      "Description": "VPC id",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "OpsWorksStackMain": {
+      "Type": "AWS::OpsWorks::Stack",
+      "Properties": {
+        "Name": { "Ref": "Prefix" },
+        "ServiceRoleArn": { 
+          "Fn::Join": [ "", [ "arn:aws:iam::", { "Ref": "AWS::AccountId" }, ":role/aws-opsworks-service-role" ] ]
+        },
+        "DefaultOs": "Amazon Linux 2015.09",
+        "DefaultRootDeviceType": "ebs",
+        "DefaultSshKeyName": { "Ref": "KeyPair" },
+        "ConfigurationManager": {
+          "Name": "Chef",
+          "Version": "11.10"
+        },
+        "CustomCookbooksSource": {
+          "Type": "s3",
+          "Url": { "Fn::Join": [ "", [ "https://", { "Ref": "CookbooksURL4CF" }, "/opsworks_cookbooks.zip" ] ] }
+        },
+        "DefaultInstanceProfileArn": { "Fn::Join": [ "", [ "arn:aws:iam::", { "Ref": "AWS::AccountId" }, ":instance-profile/aws-opsworks-ec2-role" ] ] },
+        "VpcId": { "Ref": "VPC" },
+        "DefaultSubnetId": {"Ref": "SubnetPublic1"},
+        "UseCustomCookbooks": true,
+        "UseOpsworksSecurityGroups": false,
+        "CustomJson": {
+           "prefix": { "Ref": "Prefix" }
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "OpsWorksStackMain": {
+      "Value": {
+        "Ref": "OpsWorksStackMain"
+      }
+    }
+  }
+}

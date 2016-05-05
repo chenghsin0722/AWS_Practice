@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Stg - VPC Subnets",
+  "Description": "Dev - VPC Subnets",
   "Parameters": {
     "Prefix": {
       "Description": "prefix of resources",
