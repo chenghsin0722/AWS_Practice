@@ -47,7 +47,7 @@
         },
         "CustomCookbooksSource": {
           "Type": "s3",
-          "Url": { "Fn::Join": [ "", [ "https://", { "Ref": "CookbooksURL4CF" }, "/opsworks_cookbooks.zip" ] ] }
+          "Url": { "Fn::Join": [ "", [ "https://", { "Ref": "CookbooksURL4CF" }, "/opsworks_web.zip" ] ] }
         },
         "DefaultInstanceProfileArn": { "Fn::Join": [ "", [ "arn:aws:iam::", { "Ref": "AWS::AccountId" }, ":instance-profile/aws-opsworks-ec2-role" ] ] },
         "VpcId": { "Ref": "VPC" },
