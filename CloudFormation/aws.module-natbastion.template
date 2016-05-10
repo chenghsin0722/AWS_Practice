@@ -31,172 +31,18 @@
     "SubnetPublic2": {
       "Type": "String"
     },
+    "SecurityGroupBastion": {
+      "Type": "String"
+    },
+    "SecurityGroupNat": {
+      "Type": "String"
+    },
     "VPC": {
       "Description": "VPC id",
       "Type": "String"
     }
   },
   "Resources": {
-    "SecGroupBastion": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "GroupDescription": {
-          "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "sg", "bastion" ] ]
-        },
-        "SecurityGroupIngress": [
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "22",
-            "ToPort": "22",
-            "CidrIp": "219.87.142.18/32"
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "22",
-            "ToPort": "22",
-            "CidrIp": "218.211.32.194/32"
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "22",
-            "ToPort": "22",
-            "CidrIp": "60.251.79.158/32"
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "22",
-            "ToPort": "22",
-            "CidrIp": "122.116.52.125/32"
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "22",
-            "ToPort": "22",
-            "CidrIp": "10.0.0.0/8"
-          },
-          {
-            "IpProtocol": "icmp",
-            "FromPort": "8",
-            "ToPort": "-1",
-            "CidrIp": "219.87.142.18/32"
-          },
-          {
-            "IpProtocol": "icmp",
-            "FromPort": "8",
-            "ToPort": "-1",
-            "CidrIp": "218.211.32.194/32"
-          },
-          {
-            "IpProtocol": "icmp",
-            "FromPort": "8",
-            "ToPort": "-1",
-            "CidrIp": "60.251.79.158/32"
-          },
-          {
-            "IpProtocol": "icmp",
-            "FromPort": "8",
-            "ToPort": "-1",
-            "CidrIp": "122.116.52.125/32"
-          },
-          {
-            "IpProtocol": "icmp",
-            "FromPort": "8",
-            "ToPort": "-1",
-            "CidrIp": "10.0.0.0/8"
-          },
-          {
-            "IpProtocol": "icmp",
-            "FromPort": "8",
-            "ToPort": "-1",
-            "CidrIp": {
-              "Ref": "CIDRVPC"
-            }
-          }
-        ],
-        "SecurityGroupEgress": [
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "22",
-            "ToPort": "22",
-            "CidrIp": {
-              "Ref": "CIDRVPC"
-            }
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "80",
-            "ToPort": "80",
-            "CidrIp": "0.0.0.0/0"
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "443",
-            "ToPort": "443",
-            "CidrIp": "0.0.0.0/0"
-          },
-          {
-            "IpProtocol": "icmp",
-            "FromPort": "8",
-            "ToPort": "-1",
-            "CidrIp": "0.0.0.0/0"
-          }
-        ],
-        "VpcId": {
-          "Ref": "VPC"
-        },
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "sg", "bastion" ] ] }
-          }
-        ]
-      }
-    },
-    "SecGroupNat": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "GroupDescription": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "sg", "nat" ] ] },
-        "SecurityGroupIngress": [
-          {
-            "IpProtocol": "-1",
-            "CidrIp": "10.0.0.0/8"
-          }
-        ],
-        "VpcId": {
-          "Ref": "VPC"
-        },
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": { "Fn::Join": [ ".", [ { "Ref": "Prefix" }, "vpc", "sg", "nat" ] ] }
-          }
-        ]
-      }
-    },
-    "SecGroupNatIngressBastionSSH": {
-      "Type": "AWS::EC2::SecurityGroupIngress",
-      "DependsOn": [
-        "SecGroupNat",
-        "SecGroupBastion"
-      ],
-      "Properties": {
-        "GroupId": {
-          "Fn::GetAtt": [
-            "SecGroupNat",
-            "GroupId"
-          ]
-        },
-        "IpProtocol": "tcp",
-        "ToPort": "22",
-        "FromPort": "22",
-        "SourceSecurityGroupId": {
-          "Fn::GetAtt": [
-            "SecGroupBastion",
-            "GroupId"
-          ]
-        }
-      }
-    },
     "IAMRoleNAT": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -302,7 +148,7 @@
         "ImageId": {"Ref": "AmiImageId"},
         "SecurityGroupIds": [
           {
-            "Ref": "SecGroupNat"
+            "Ref": "SecurityGroupNat"
           }
         ],
         "Tags": [
@@ -389,7 +235,7 @@
         "ImageId": {"Ref": "AmiImageId"},
         "SecurityGroupIds": [
           {
-            "Ref": "SecGroupNat"
+            "Ref": "SecurityGroupNat"
           }
         ],
         "Tags": [
@@ -488,7 +334,7 @@
         "ImageId": { "Ref": "AmiImageId" },
         "SecurityGroupIds": [
           {
-            "Ref": "SecGroupBastion"
+            "Ref": "SecurityGroupBastion"
           }
         ],
         "Tags": [
@@ -573,22 +419,6 @@
     }
   },
   "Outputs": {
-    "SecurityGroupGroupIdBastion": {
-      "Value": {
-        "Fn::GetAtt": [
-          "SecGroupBastion",
-          "GroupId"
-        ]
-      }
-    },
-    "SecurityGroupGroupIdNat": {
-      "Value": {
-        "Fn::GetAtt": [
-          "SecGroupNat",
-          "GroupId"
-        ]
-      }
-    },
     "EIPEC2InstanceBastion": {
       "Value": {
         "Ref": "EIPEC2InstanceBastion"
