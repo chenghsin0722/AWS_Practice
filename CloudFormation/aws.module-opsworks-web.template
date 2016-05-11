@@ -1,0 +1,70 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Dev - Public - WebServer",
+  "Parameters": {
+    "KeyPair": {
+      "Type": "String"
+    },
+    "OpsWorksStackMain": {
+      "Type": "String"
+    },
+    "Prefix": {
+      "Type": "String"
+    },
+    "SubnetPrivateApp1": {
+      "Type": "String"
+    },
+    "SubnetPrivateApp2": {
+      "Type": "String"
+    },
+    "SubnetPublic1": {
+      "Type": "String"
+    },
+    "SubnetPublic2": {
+      "Type": "String"
+    },
+    "VPC": {
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "OpsWorksLayerWS": {
+      "Type": "AWS::OpsWorks::Layer",
+      "Properties": {
+        "StackId": { "Ref": "OpsWorksStackMain" },
+        "Name": "WebServer",
+        "Type": "custom",
+        "CustomRecipes": {
+          "Setup": [
+            "webserver"
+          ]
+        },
+        "EnableAutoHealing": "true",
+        "AutoAssignElasticIps" : "true",
+        "AutoAssignPublicIps" : "true",
+        "Shortname" : "webapp"
+      }
+    },
+   "InstanceWS1": {
+      "Type": "AWS::OpsWorks::Instance",
+      "DependsOn": [
+        "OpsWorksLayerWS"
+       ],
+      "Properties": {
+        "StackId": {
+          "Ref": "OpsWorksStackMain"
+        },
+        "LayerIds": [
+          {
+            "Ref": "OpsWorksLayerWS"
+          }
+        ],
+        "InstanceType": "t2.micro",
+        "RootDeviceType": "ebs",
+        "SubnetId": {
+          "Ref": "SubnetPublic1"
+        }
+      }
+    }
+  }
+}

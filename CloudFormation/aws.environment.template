@@ -37,6 +37,11 @@
       "Default": "10.104.16.0/22",
       "Type": "String"
     },
+    "AdminCIDR": {
+      "Description": "CIDR which could be ssh",
+      "Default": "219.87.142.18/24",
+      "Type": "String"
+    },
     "CookbooksURL4CF": {
       "Description": "Cookbooks URL for CloudFormation.",
       "Default": "s3-us-west-2.amazonaws.com/ch-cookbooks",
@@ -107,10 +112,30 @@
         }
       }
     },
-    "StackNatBastion": {
+    "StackSecurityGroup": {
       "Type": "AWS::CloudFormation::Stack",
       "DependsOn": [
         "StackVPC"
+      ],
+      "Properties": {
+        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/aws.module-securitygroup.template" ] ] },
+        "Parameters": {
+          "CIDRVPC": { "Ref": "CIDRVPC" },
+          "Prefix": { "Ref": "Prefix" },
+          "AdminCIDR": { "Ref": "AdminCIDR" },
+          "VPC": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.VPC"
+            ]
+          }
+        }
+      }
+    },
+    "StackNatBastion": {
+      "Type": "AWS::CloudFormation::Stack",
+      "DependsOn": [
+        "StackVPC","StackSecurityGroup"
       ],
       "Properties": {
         "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/aws.module-natbastion.template" ] ] },
@@ -147,6 +172,18 @@
               "Outputs.SubnetPublic2"
             ]
           },
+	  "SecurityGroupBastion": {
+            "Fn::GetAtt": [
+              "StackSecurityGroup",
+              "Outputs.SecurityGroupBastion"
+            ]
+	  },
+          "SecurityGroupNat": {
+            "Fn::GetAtt": [
+              "StackSecurityGroup",
+              "Outputs.SecurityGroupNat"
+            ]
+          },
           "VPC": {
             "Fn::GetAtt": [
               "StackVPC",
@@ -162,7 +199,7 @@
         "StackVPC", "StackNatBastion"
       ],
       "Properties": {
-        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/aws.module-main.template" ] ] },
+        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/aws.module-opsworks-main.template" ] ] },
         "Parameters": {
           "CookbooksURL4CF": {
             "Ref": "CookbooksURL4CF"
@@ -200,6 +237,58 @@
               "StackVPC",
               "Outputs.VPC"
             ]
+          }
+        }
+      }
+    },
+    "StackWebServer" : {
+      "Type": "AWS::CloudFormation::Stack",
+      "DependsOn": [
+        "StackMain"
+      ],
+      "Properties": {
+        "TemplateURL": { "Fn::Join": [ "", [ "https://", { "Ref": "TemplateURL4CF" }, "/aws.module-opsworks-web.template" ] ] },
+        "Parameters": {
+          "KeyPair": {
+            "Ref": "KeyPair"
+          },
+          "Prefix": {"Ref": "Prefix"},
+          "SubnetPrivateApp1": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.SubnetPrivateApp1"
+            ]
+          },
+          "SubnetPrivateApp2": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.SubnetPrivateApp2"
+            ]
+          },
+          "SubnetPublic1": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.SubnetPublic1"
+            ]
+          },
+          "SubnetPublic2": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.SubnetPublic2"
+            ]
+          },
+          "VPC": {
+            "Fn::GetAtt": [
+              "StackVPC",
+              "Outputs.VPC"
+            ]
+          },
+          "OpsWorksStackMain" : {
+            "Fn::GetAtt": [
+              "StackMain",
+              "Outputs.OpsWorksStackMain"
+            ]
+
           }
         }
       }

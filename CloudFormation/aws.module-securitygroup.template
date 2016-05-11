@@ -1,0 +1,483 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Dev - Setup security groups",
+  "Parameters": {
+    "Prefix": {
+      "Description": "prefix of resources",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "24",
+      "ConstraintDescription": "Length is too long"
+    },
+    "CIDRVPC": {
+      "Description": "network cidr prefix",
+      "Type": "String"
+    },
+    "AdminCIDR": {
+      "Description": "Cidr which could be ssh",
+      "Type": "String"
+    },
+    "VPC": {
+      "Description": "VPC id",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "SecurityGroupBasic": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": {
+          "Fn::Join": [
+            ".",
+            [
+              {
+                "Ref": "Prefix"
+              },
+              "vpc",
+              "sg",
+              "basic"
+            ]
+          ]
+        },
+        "SecurityGroupIngress": [
+        ],
+        "SecurityGroupEgress": [
+          {
+            "IpProtocol": "udp",
+            "FromPort": "123",
+            "ToPort": "123",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                ".",
+                [
+                  {
+                    "Ref": "Prefix"
+                  },
+                  "vpc",
+                  "sg",
+                  "basic"
+                ]
+              ]
+            }
+          },
+          {
+            "Key": "EnvName",
+            "Value": {
+              "Ref": "Prefix"
+            }
+          }
+        ]
+      }
+    },
+    "SecurityGroupApp": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": {
+          "Fn::Join": [
+            ".",
+            [
+              {
+                "Ref": "Prefix"
+              },
+              "vpc",
+              "sg",
+              "app"
+            ]
+          ]
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+	    "SourceSecurityGroupId": {"Ref": "SecurityGroupBastion"}
+          },
+          {
+            "IpProtocol": "icmp",
+            "FromPort": "8",
+            "ToPort": "-1",
+            "CidrIp": {
+              "Ref": "CIDRVPC"
+	    }
+          }
+        ],
+        "SecurityGroupEgress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0" 
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": "0.0.0.0/0" 
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "25",
+            "ToPort": "25",
+            "CidrIp": "0.0.0.0/0" 
+          },
+          {
+            "IpProtocol": "udp",
+            "FromPort": "53",
+            "ToPort": "53",
+            "CidrIp": "0.0.0.0/0" 
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                ".",
+                [
+                  {
+                    "Ref": "Prefix"
+                  },
+                  "vpc",
+                  "sg",
+                  "app"
+                ]
+              ]
+            }
+          },
+          {
+            "Key": "EnvName",
+            "Value": {
+              "Ref": "Prefix"
+            }
+          }
+        ]
+      }
+    },
+    "SecurityGroupBastion": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": {
+          "Fn::Join": [
+            ".",
+            [
+              {
+                "Ref": "Prefix"
+              },
+              "vpc",
+              "sg",
+              "bastion"
+            ]
+          ]
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "AdminCIDR"
+            }
+	 },
+         {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": "219.87.142.18/32"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": "218.211.32.194/32"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": "60.251.79.158/32"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": "122.116.52.125/32"
+          },
+	 {
+            "IpProtocol": "icmp",
+            "FromPort": "8",
+            "ToPort": "-1",
+            "CidrIp": {
+              "Ref": "AdminCIDR"
+            }
+         },
+         {
+            "IpProtocol": "icmp",
+            "FromPort": "8",
+            "ToPort": "-1",
+            "CidrIp": {
+              "Ref": "CIDRVPC"
+            }
+          },
+         {
+            "IpProtocol": "icmp",
+            "FromPort": "8",
+            "ToPort": "-1",
+            "CidrIp": "219.87.142.18/32"
+          },
+	  {
+            "IpProtocol": "icmp",
+            "FromPort": "8",
+            "ToPort": "-1",
+            "CidrIp": "218.211.32.194/32"
+          },
+          {
+            "IpProtocol": "icmp",
+            "FromPort": "8",
+            "ToPort": "-1",
+            "CidrIp": "60.251.79.158/32"
+          },
+          {
+            "IpProtocol": "icmp",
+            "FromPort": "8",
+            "ToPort": "-1",
+            "CidrIp": "122.116.52.125/32"
+          }
+        ],
+        "SecurityGroupEgress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "CIDRVPC"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": "0.0.0.0/0"
+          },
+	  {
+            "IpProtocol": "icmp",
+            "FromPort": "8",
+            "ToPort": "-1",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                ".",
+                [
+                  {
+                    "Ref": "Prefix"
+                  },
+                  "vpc",
+                  "sg",
+                  "bastion"
+                ]
+              ]
+            }
+          },
+          {
+            "Key": "EnvName",
+            "Value": {
+              "Ref": "Prefix"
+            }
+          }
+        ]
+      }
+    },
+    "SecurityGroupNat": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": {
+          "Fn::Join": [
+            ".",
+            [
+              {
+                "Ref": "Prefix"
+              },
+              "vpc",
+              "sg",
+              "nat"
+            ]
+          ]
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": {
+              "Ref": "CIDRVPC"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": {
+              "Ref": "CIDRVPC"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "25",
+            "ToPort": "25",
+            "CidrIp": {
+              "Ref": "CIDRVPC"
+            }
+          },
+          {
+            "IpProtocol": "icmp",
+            "FromPort": "8",
+            "ToPort": "-1",
+            "CidrIp": {
+              "Ref": "CIDRVPC"
+	    }
+          },
+	  {
+            "IpProtocol": "udp",
+	    "FromPort": "123",
+	    "ToPort": "123",
+	    "CidrIp": {
+              "Ref": "CIDRVPC"
+            }
+	  },
+	  {
+            "IpProtocol": "udp",
+	    "FromPort": "53",
+	    "ToPort": "53",
+	    "CidrIp": {
+              "Ref": "CIDRVPC"
+            }
+	  }
+        ],
+        "SecurityGroupEgress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "25",
+            "ToPort": "25",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "icmp",
+            "FromPort": "8",
+            "ToPort": "-1",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "udp",
+            "FromPort": "53",
+            "ToPort": "53",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "udp",
+            "FromPort": "123",
+            "ToPort": "123",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                ".",
+                [
+                  {
+                    "Ref": "Prefix"
+                  },
+                  "vpc",
+                  "sg",
+                  "nat"
+                ]
+              ]
+            }
+          },
+          {
+            "Key": "EnvName",
+            "Value": {
+              "Ref": "Prefix"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "SecurityGroupBasic": {
+      "Value": {
+        "Fn::GetAtt": [
+          "SecurityGroupBasic",
+          "GroupId"
+        ]
+      }
+    },
+    "SecurityGroupApp": {
+      "Value": {
+        "Fn::GetAtt": [
+          "SecurityGroupApp",
+          "GroupId"
+        ]
+      }
+    },
+    "SecurityGroupNat": {
+      "Value": {
+        "Fn::GetAtt": [
+          "SecurityGroupNat",
+          "GroupId"
+        ]
+      }
+    },
+    "SecurityGroupBastion": {
+      "Value": {
+        "Fn::GetAtt": [
+          "SecurityGroupBastion",
+          "GroupId"
+        ]
+      }
+    }
+  }
+}
