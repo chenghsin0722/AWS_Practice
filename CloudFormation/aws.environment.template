@@ -277,6 +277,18 @@
               "Outputs.SubnetPublic2"
             ]
           },
+          "SecurityGroupBasic": {
+            "Fn::GetAtt": [
+              "StackSecurityGroup",
+              "Outputs.SecurityGroupBasic"
+            ]
+          },
+          "SecurityGroupApp": {
+            "Fn::GetAtt": [
+              "StackSecurityGroup",
+              "Outputs.SecurityGroupApp"
+            ]
+          },
           "VPC": {
             "Fn::GetAtt": [
               "StackVPC",

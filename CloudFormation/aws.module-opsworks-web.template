@@ -23,6 +23,12 @@
     "SubnetPublic2": {
       "Type": "String"
     },
+    "SecurityGroupBasic": {
+      "Type": "String"
+    },
+    "SecurityGroupApp": {
+      "Type": "String"
+    },
     "VPC": {
       "Type": "String"
     }
@@ -42,7 +48,11 @@
         "EnableAutoHealing": "true",
         "AutoAssignElasticIps" : "true",
         "AutoAssignPublicIps" : "true",
-        "Shortname" : "webapp"
+        "Shortname" : "webapp",
+        "CustomSecurityGroupIds":[
+          { "Ref": "SecurityGroupBasic"},
+          { "Ref": "SecurityGroupApp" }
+        ]
       }
     },
    "InstanceWS1": {
