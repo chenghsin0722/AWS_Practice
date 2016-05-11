@@ -93,232 +93,18 @@
         ]
       }
     },
-    "RoleWrsCommon": {
-      "Type": "AWS::IAM::Role",
+    "EC2NatGateway1": {
+      "Type": "AWS::EC2::NatGateway",
       "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [ {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": [ "ec2.amazonaws.com" ]
-              },
-              "Action": [ "sts:AssumeRole" ]
-            } ]
-        },
-        "Path": "/",
-        "Policies": [ {
-            "PolicyName": "ReadOnlyS3",
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [ {
-                  "Effect": "Allow",
-                  "Resource": "*",
-                  "Action": [
-                    "s3:Get*",
-                    "s3:List*"
-                  ]
-                } ]
-            }
-          }
-        ]
-      }
-    },
-    "InstanceProfileWrs": {
-      "Type": "AWS::IAM::InstanceProfile",
-      "Properties": {
-        "Path": "/",
-        "Roles": [ {
-            "Ref": "RoleWrsCommon"
-          }  ]
-      }
-    },
-    "EC2InstanceNat1": {
-      "Type": "AWS::EC2::Instance",
-      "Properties": {
-        "InstanceType": "t2.micro",
-        "KeyName": {
-          "Ref": "KeyPair"
-        },
-        "SubnetId": {
-          "Ref": "SubnetPublic1"
-        },
-        "IamInstanceProfile": {"Ref": "InstanceProfileNATRole"},
-        "SourceDestCheck": "false",
-        "ImageId": {"Ref": "AmiImageId"},
-        "SecurityGroupIds": [
-          {
-            "Ref": "SecurityGroupNat"
-          }
-        ],
-        "Tags": [
-          {
-            "Key": "Stack",
-            "Value": {
-              "Ref": "AWS::StackId"
-            }
-          },
-          {
-            "Key": "Name",
-            "Value": { "Fn::Join": [".", [ { "Ref": "Prefix" }, "vpc", "a", "i", "nat" ] ] }
-          }
-        ],
-        "UserData": {
-          "Fn::Base64": {
-            "Fn::Join": [
-              "",
-              [
-                "#!/bin/bash -v\n",
-                "# Update aws cli\n",
-                "yum update -y aws*\n",
-                ". /etc/profile.d/aws-apitools-common.sh\n",
-                "# Configure iptables\n",
-                "/sbin/iptables -t nat -A POSTROUTING -o eth0 -s 0.0.0.0/0 ! -d 10.0.0.0/8 -j MASQUERADE\n",
-                "/sbin/iptables-save > /etc/sysconfig/iptables\n",
-                "# Configure ip forwarding and redirects\n",
-                "echo 1 >  /proc/sys/net/ipv4/ip_forward && echo 0 >  /proc/sys/net/ipv4/conf/eth0/send_redirects\n",
-                "mkdir -p /etc/sysctl.d/\n",
-                "cat <<EOF > /etc/sysctl.d/nat.conf\n",
-                "net.ipv4.ip_forward = 1\n",
-                "net.ipv4.conf.eth0.send_redirects = 0\n",
-                "EOF\n",
-                "# Move nat_monitor.sh and configure\n",
-                "cd /root\n",
-                "wget http://media.amazonwebservices.com/articles/nat_monitor_files/nat_monitor.sh -O /tmp/nat_monitor.sh\n",
-                "mv /tmp/nat_monitor.sh .\n",
-                "# Wait for NAT #1 to boot up and update RouteTableNat1\n",
-                "sleep 180\n",
-                "NAT_ID=\n",
-                "# CloudFormation should have updated the RouteTableNat1 by now (due to yum update), however loop to make sure\n",
-                "while [ \"$NAT_ID\" == \"\" ]; do\n",
-                "  sleep 60\n",
-                "  NAT_ID=`/opt/aws/bin/ec2-describe-route-tables ",
-                {"Ref": "RouteTableNat1"},
-                " -U https://ec2.",
-                {"Ref": "AWS::Region"},
-                ".amazonaws.com | grep 0.0.0.0/0 | awk '{print $2;}'`\n",
-                "  #echo `date` \"-- NAT_ID=$NAT_ID\" >> /var/log/nat_monitor.log\n",
-                "done\n",
-                "# Update NAT_ID, NAT_RT_ID, and My_RT_ID\n",
-                "sed \"s/NAT_ID=/NAT_ID=$NAT_ID/g\" /root/nat_monitor.sh > /root/nat_monitor.tmp\n",
-                "sed \"s/NAT_RT_ID=/NAT_RT_ID=",
-                {"Ref": "RouteTableNat1"},
-                "/g\" /root/nat_monitor.tmp > /root/nat_monitor.sh\n",
-                "sed \"s/My_RT_ID=/My_RT_ID=",
-                {"Ref": "RouteTableNat1"},
-                "/g\" /root/nat_monitor.sh > /root/nat_monitor.tmp\n",
-                "sed \"s/EC2_URL=/EC2_URL=https:\\/\\/ec2.",
-                {"Ref": "AWS::Region"},
-                ".amazonaws.com",
-                "/g\" /root/nat_monitor.tmp > /root/nat_monitor.sh\n",
-                "chmod a+x /root/nat_monitor.sh\n",
-                "echo '@reboot /root/nat_monitor.sh >> /var/log/nat_monitor.log' | crontab\n",
-                "/root/nat_monitor.sh > /var/log/nat_monitor.log &\n"
-              ]
-            ]
-          }
-        }
-      }
-    },
-    "EC2InstanceNat2": {
-      "Type": "AWS::EC2::Instance",
-      "Properties": {
-        "InstanceType": "t2.micro",
-        "KeyName": {
-          "Ref": "KeyPair"
-        },
-        "SubnetId": {
-          "Ref": "SubnetPublic2"
-        },
-        "IamInstanceProfile": {"Ref": "InstanceProfileNATRole"},
-        "SourceDestCheck": "false",
-        "ImageId": {"Ref": "AmiImageId"},
-        "SecurityGroupIds": [
-          {
-            "Ref": "SecurityGroupNat"
-          }
-        ],
-        "Tags": [
-          {
-            "Key": "Stack",
-            "Value": {
-              "Ref": "AWS::StackId"
-            }
-          },
-          {
-            "Key": "Name",
-            "Value": { "Fn::Join": [".", [ { "Ref": "Prefix" }, "vpc", "b", "i", "nat" ] ] }
-          }
-        ],
-        "UserData": {
-          "Fn::Base64": {
-            "Fn::Join": [
-              "",
-              [
-                "#!/bin/bash -v\n",
-                "# Update aws cli\n",
-                "yum update -y aws*\n",
-                ". /etc/profile.d/aws-apitools-common.sh\n",
-                "# Configure iptables\n",
-                "/sbin/iptables -t nat -A POSTROUTING -o eth0 -s 0.0.0.0/0 ! -d 10.0.0.0/8 -j MASQUERADE\n",
-                "/sbin/iptables-save > /etc/sysconfig/iptables\n",
-                "# Configure ip forwarding and redirects\n",
-                "echo 1 >  /proc/sys/net/ipv4/ip_forward && echo 0 >  /proc/sys/net/ipv4/conf/eth0/send_redirects\n",
-                "mkdir -p /etc/sysctl.d/\n",
-                "cat <<EOF > /etc/sysctl.d/nat.conf\n",
-                "net.ipv4.ip_forward = 1\n",
-                "net.ipv4.conf.eth0.send_redirects = 0\n",
-                "EOF\n",
-                "# Move nat_monitor.sh and configure\n",
-                "cd /root\n",
-                "wget http://media.amazonwebservices.com/articles/nat_monitor_files/nat_monitor.sh -O /tmp/nat_monitor.sh\n",
-                "mv /tmp/nat_monitor.sh .\n",
-                "# Wait for NAT #2 to boot up and update RouteTableNat2\n",
-                "sleep 180\n",
-                "NAT_ID=\n",
-                "# CloudFormation should have updated the RouteTableNat2 by now (due to yum update), however loop to make sure\n",
-                "while [ \"$NAT_ID\" == \"\" ]; do\n",
-                "  sleep 60\n",
-                "  NAT_ID=`/opt/aws/bin/ec2-describe-route-tables ",
-                {"Ref": "RouteTableNat2"},
-                " -U https://ec2.",
-                {"Ref": "AWS::Region"},
-                ".amazonaws.com | grep 0.0.0.0/0 | awk '{print $2;}'`\n",
-                "  #echo `date` \"-- NAT_ID=$NAT_ID\" >> /var/log/nat_monitor.log\n",
-                "done\n",
-                "# Update NAT_ID, NAT_RT_ID, and My_RT_ID\n",
-                "sed \"s/NAT_ID=/NAT_ID=$NAT_ID/g\" /root/nat_monitor.sh > /root/nat_monitor.tmp\n",
-                "sed \"s/NAT_RT_ID=/NAT_RT_ID=",
-                {"Ref": "RouteTableNat2"},
-                "/g\" /root/nat_monitor.tmp > /root/nat_monitor.sh\n",
-                "sed \"s/My_RT_ID=/My_RT_ID=",
-                {"Ref": "RouteTableNat1"},
-                "/g\" /root/nat_monitor.sh > /root/nat_monitor.tmp\n",
-                "sed \"s/EC2_URL=/EC2_URL=https:\\/\\/ec2.",
-                {"Ref": "AWS::Region"},
-                ".amazonaws.com",
-                "/g\" /root/nat_monitor.tmp > /root/nat_monitor.sh\n",
-                "chmod a+x /root/nat_monitor.sh\n",
-                "echo '@reboot /root/nat_monitor.sh >> /var/log/nat_monitor.log' | crontab\n",
-                "/root/nat_monitor.sh > /var/log/nat_monitor.log &\n"
-              ]
-            ]
-          }
-        }
-      }
-    },
-    "EC2NatGateway1" : {
-      "Type" : "AWS::EC2::NatGateway",
-      "Properties" : {
         "AllocationId" : { "Fn::GetAtt" : ["EIPEC2NatGateway1", "AllocationId"]},
-        "SubnetId" : { "Ref" : "SubnetPublic1"}
+		"SubnetId": { "Ref": "SubnetPublic1"}
       }
     },
-    "EC2NatGateway2" : {
-      "Type" : "AWS::EC2::NatGateway",
-      "Properties" : {
+    "EC2NatGateway2": {
+      "Type": "AWS::EC2::NatGateway",
+      "Properties": {
         "AllocationId" : { "Fn::GetAtt" : ["EIPEC2NatGateway2", "AllocationId"]},
-        "SubnetId" : { "Ref" : "SubnetPublic2"}
+                "SubnetId": { "Ref": "SubnetPublic2"}
       }
     },
     "EC2InstanceBastion": {
@@ -362,8 +148,7 @@
               ]
             ]
           }
-        },
-        "IamInstanceProfile": {"Ref": "InstanceProfileWrs"}
+        }
       }
     },
     "EIPEC2InstanceBastion": {
@@ -372,20 +157,6 @@
         "InstanceId": {
           "Ref": "EC2InstanceBastion"
         },
-        "Domain": "vpc"
-      }
-    },
-    "EIPEC2InstanceNat1": {
-      "Type": "AWS::EC2::EIP",
-      "Properties": {
-        "InstanceId": { "Ref": "EC2InstanceNat1" },
-        "Domain": "vpc"
-      }
-    },
-    "EIPEC2InstanceNat2": {
-      "Type": "AWS::EC2::EIP",
-      "Properties": {
-        "InstanceId": { "Ref": "EC2InstanceNat2" },
         "Domain": "vpc"
       }
     },
@@ -424,22 +195,11 @@
         "Ref": "EIPEC2InstanceBastion"
       }
     },
-    "EIPEC2InstanceNat1": {
-      "Value": { "Ref": "EIPEC2InstanceNat1" }
+    "EIPEC2NatGateway1": {
+      "Value": { "Ref": "EIPEC2NatGateway1" }
     },
-    "EIPEC2InstanceNat2": {
-      "Value": { "Ref": "EIPEC2InstanceNat2" }
-    },
-    "InstanceProfileWrs": {
-      "Value": { "Ref": "InstanceProfileWrs" }
-    },
-    "WrsProfileArn": {
-      "Value": {
-        "Fn::GetAtt": [
-          "InstanceProfileWrs",
-          "Arn"
-        ]
-      }
+    "EIPEC2NatGateway2": {
+      "Value": { "Ref": "EIPEC2NatGateway2" }
     }
   }
 }
